@@ -1,117 +1,119 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
-  Text,
-  useColorScheme,
   View,
+  Button,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { startOCR } from '@valifysolutions/react-native-vidvocr';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+// Unified credentials
+const creds = {
+  baseURL: 'https://www.valifystage.com/', // Update with your actual base URL
+  bundleKey: 'ad44eb94ca6747beaf99eef02407221f', // Replace with your actual bundle key
+  userName: 'mobileusername', // Replace with actual credentials
+  password: 'q5YT54wuJ2#mbanR',
+  clientID: 'aKM21T4hXpgHFsgNJNTKFpaq4fFpoQvuBsNWuZoQ',
+  clientSecret: 'r0tLrtxTue8c4kNmPVgaAFNGSeCWvL4oOZfBnVXoQe2Ffp5rscXXAAhX50BaZEll8ZRtr2BlgD3Nk6QLOPGtjbGXYoCBL9Fn7QCu5CsMlRKDbtwSnUAfKEG30cIv8tdW',
+};
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+const getToken = async () => {
+  const url = `${creds.baseURL}/api/o/token/`;
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+  const body = `username=${creds.userName}&password=${creds.password}&client_id=${creds.clientID}&client_secret=${creds.clientSecret}&grant_type=password`;
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: body,
+    });
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    if (response.ok) {
+      const jsonResponse = await response.json();
+      return jsonResponse.access_token;
+    } else {
+      throw new Error('Failed to retrieve token');
+    }
+  } catch (error) {
+    console.error(error);
+    Alert.alert('Error', 'Could not generate token');
+    return null;
+  }
+};
+
+const App = (): JSX.Element => {
+  const [loading, setLoading] = useState(false);
+
+  const handleStartValify = async () => {
+    setLoading(true);
+
+    const token = await getToken();
+
+    if (token) {
+      // Start OCR Process
+      const ocrParams = {
+        access_token: token,
+        base_url: creds.baseURL,
+        bundle_key: creds.bundleKey,
+        language: 'en',
+        capture_only_mode: true
+      };
+
+      startOCR(ocrParams)
+        .then((ocrResponse) => {
+          console.log('OCR Result:', ocrResponse);
+
+          // Parse the OCR response if it’s a string
+          const parsedResponse = typeof ocrResponse === 'string' ? JSON.parse(ocrResponse) : ocrResponse;
+
+          // Check the OCR result state
+          if (parsedResponse.nameValuePairs?.state === "SUCCESS") {
+            const transactionIdFront = parsedResponse.nameValuePairs?.ocrResult?.ocrResult?.transactionIdFront;
+            console.log('Transaction ID Front:', transactionIdFront);
+
+            if (transactionIdFront) {
+              // Wait 2 seconds before starting liveness experience // 2 seconds delay
+            } else {
+              Alert.alert('Error', 'Transaction ID not found in OCR response');
+            }
+          } else {
+            console.log('Current OCR state is not SUCCESS');
+          }
+        })
+        .catch((ocrError) => {
+          console.error('OCR Error:', ocrError);
+          Alert.alert('Error', 'OCR failed');
+        })
+        .finally(() => setLoading(false));
+    }
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.buttonContainer}>
+        {loading ? (
+          <ActivityIndicator size="large" color="#0000ff" />
+        ) : (
+          <Button title="Start Valify" onPress={handleStartValify} />
+        )}
+      </View>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  buttonContainer: {
+    width: '80%',
   },
 });
 
