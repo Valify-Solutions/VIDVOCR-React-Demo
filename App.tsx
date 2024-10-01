@@ -6,85 +6,79 @@ import {
   Button,
   Alert,
   ActivityIndicator,
-  Text,
 } from 'react-native';
-import CheckBox from '@react-native-community/checkbox'; // Make sure to install this package
-
 import { startOCR } from '@valifysolutions/react-native-vidvocr';
 
 // Unified credentials
 const creds = {
-  baseURL: 'https://www.valifystage.com/',
-  bundleKey: 'ad44eb94ca6747beaf99eef02407221f',
-  userName: 'mobileusername',
+  baseURL: 'https://www.valifystage.com/', // Update with your actual base URL
+  bundleKey: 'ad44eb94ca6747beaf99eef02407221f', // Replace with your actual bundle key
+  userName: 'mobileusername', // Replace with actual credentials
   password: 'q5YT54wuJ2#mbanR',
   clientID: 'aKM21T4hXpgHFsgNJNTKFpaq4fFpoQvuBsNWuZoQ',
   clientSecret: 'r0tLrtxTue8c4kNmPVgaAFNGSeCWvL4oOZfBnVXoQe2Ffp5rscXXAAhX50BaZEll8ZRtr2BlgD3Nk6QLOPGtjbGXYoCBL9Fn7QCu5CsMlRKDbtwSnUAfKEG30cIv8tdW',
 };
+const language = "en"; // "en" is set as default
+const document_verification = false; // false is set as default
+const collect_user_info = false; // false is set as default
+const document_verification_plus = false // false is set as default
+const advanced_confidence = false; // false is set as default
+const profession_analysis = false; // false is set as default
+const review_data = false; // default is true
+const preview_captured_image = true; //default is false
+const manual_capture_mode = false; //default is false
+const capture_only_mode = true; // default is false
+const primaryColor = "";
+const headers = {}; // default is empty
+const enable_logging= false;
+      const ocrParams = {
+        access_token: token,
+        base_url: creds.baseURL,
+        bundle_key: creds.bundleKey,
+        language: language,
+        document_verification:document_verification,
+        collect_user_info:collect_user_info,
+        document_verification_plus:document_verification_plus,
+        advanced_confidence:advanced_confidence,
+        profession_analysis:profession_analysis,
+        review_data:review_data,
+        preview_captured_image:preview_captured_image,
+        manual_capture_mode:manual_capture_mode,
+        capture_only_mode:capture_only_mode,
+        primaryColor:primaryColor,
+        headers:headers,
+        enable_logging:enable_logging
+
+      };
+const getToken = async () => {
+  const url = ${creds.baseURL}/api/o/token/;
+
+  const body = username=${creds.userName}&password=${creds.password}&client_id=${creds.clientID}&client_secret=${creds.clientSecret}&grant_type=password;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: body,
+    });
+
+    if (response.ok) {
+      const jsonResponse = await response.json();
+      return jsonResponse.access_token;
+    } else {
+      throw new Error('Failed to retrieve token');
+    }
+  } catch (error) {
+    console.error(error);
+    Alert.alert('Error', 'Could not generate token');
+    return null;
+  }
+};
 
 const App = (): JSX.Element => {
   const [loading, setLoading] = useState(false);
-  const [isArabic, setIsArabic] = useState(false); // Language check
-  const [documentVerification, setDocumentVerification] = useState(false);
-  const [collectUserInfo, setCollectUserInfo] = useState(false);
-  const [documentVerificationPlus, setDocumentVerificationPlus] = useState(false);
-  const [advancedConfidence, setAdvancedConfidence] = useState(false);
-  const [professionAnalysis, setProfessionAnalysis] = useState(false);
-  const [reviewData, setReviewData] = useState(true); // Default is true
-  const [previewCapturedImage, setPreviewCapturedImage] = useState(false);
-  const [manualCaptureMode, setManualCaptureMode] = useState(false);
-  const [captureOnlyMode, setCaptureOnlyMode] = useState(false);
-  const [enableLogging, setEnableLogging] = useState(false);
-
-  // Language setting
-  const language = isArabic ? 'ar' : 'en';
-  const primaryColor = '#0000FF'; // Default color is blue
-
-  const ocrParams = {
-    access_token: token, // token should be fetched before this
-    base_url: creds.baseURL,
-    bundle_key: creds.bundleKey,
-    language: language,
-    document_verification: documentVerification,
-    collect_user_info: collectUserInfo,
-    document_verification_plus: documentVerificationPlus,
-    advanced_confidence: advancedConfidence,
-    profession_analysis: professionAnalysis,
-    review_data: reviewData,
-    preview_captured_image: previewCapturedImage,
-    manual_capture_mode: manualCaptureMode,
-    capture_only_mode: captureOnlyMode,
-    primaryColor: primaryColor,
-    enable_logging: enableLogging,
-    headers: {},
-  };
-
-  const getToken = async () => {
-    const url = `${creds.baseURL}/api/o/token/`;
-
-    const body = `username=${creds.userName}&password=${creds.password}&client_id=${creds.clientID}&client_secret=${creds.clientSecret}&grant_type=password`;
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: body,
-      });
-
-      if (response.ok) {
-        const jsonResponse = await response.json();
-        return jsonResponse.access_token;
-      } else {
-        throw new Error('Failed to retrieve token');
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Could not generate token');
-      return null;
-    }
-  };
 
   const handleStartValify = async () => {
     setLoading(true);
@@ -92,17 +86,24 @@ const App = (): JSX.Element => {
     const token = await getToken();
 
     if (token) {
+      // Start OCR Process
+
+
       startOCR(ocrParams)
         .then((ocrResponse) => {
           console.log('OCR Result:', ocrResponse);
 
+          // Parse the OCR response if it’s a string
           const parsedResponse = typeof ocrResponse === 'string' ? JSON.parse(ocrResponse) : ocrResponse;
 
+          // Check the OCR result state
           if (parsedResponse.nameValuePairs?.state === "SUCCESS") {
             const transactionIdFront = parsedResponse.nameValuePairs?.ocrResult?.ocrResult?.transactionIdFront;
             console.log('Transaction ID Front:', transactionIdFront);
 
-            if (!transactionIdFront) {
+            if (transactionIdFront) {
+              // Wait 2 seconds before starting liveness experience // 2 seconds delay
+            } else {
               Alert.alert('Error', 'Transaction ID not found in OCR response');
             }
           } else {
@@ -119,41 +120,6 @@ const App = (): JSX.Element => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.optionsContainer}>
-        <Text>Arabic Language</Text>
-        <CheckBox value={isArabic} onValueChange={setIsArabic} />
-
-        <Text>Document Verification</Text>
-        <CheckBox value={documentVerification} onValueChange={setDocumentVerification} />
-
-        <Text>Collect User Info</Text>
-        <CheckBox value={collectUserInfo} onValueChange={setCollectUserInfo} />
-
-        <Text>Document Verification Plus</Text>
-        <CheckBox value={documentVerificationPlus} onValueChange={setDocumentVerificationPlus} />
-
-        <Text>Advanced Confidence</Text>
-        <CheckBox value={advancedConfidence} onValueChange={setAdvancedConfidence} />
-
-        <Text>Profession Analysis</Text>
-        <CheckBox value={professionAnalysis} onValueChange={setProfessionAnalysis} />
-
-        <Text>Review Data</Text>
-        <CheckBox value={reviewData} onValueChange={setReviewData} />
-
-        <Text>Preview Captured Image</Text>
-        <CheckBox value={previewCapturedImage} onValueChange={setPreviewCapturedImage} />
-
-        <Text>Manual Capture Mode</Text>
-        <CheckBox value={manualCaptureMode} onValueChange={setManualCaptureMode} />
-
-        <Text>Capture Only Mode</Text>
-        <CheckBox value={captureOnlyMode} onValueChange={setCaptureOnlyMode} />
-
-        <Text>Enable Logging</Text>
-        <CheckBox value={enableLogging} onValueChange={setEnableLogging} />
-      </View>
-
       <View style={styles.buttonContainer}>
         {loading ? (
           <ActivityIndicator size="large" color="#0000ff" />
@@ -170,10 +136,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  optionsContainer: {
-    width: '80%',
-    marginBottom: 20,
   },
   buttonContainer: {
     width: '80%',
