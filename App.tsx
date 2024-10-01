@@ -31,29 +31,11 @@ const capture_only_mode = true; // default is false
 const primaryColor = "";
 const headers = {}; // default is empty
 const enable_logging= false;
-      const ocrParams = {
-        access_token: token,
-        base_url: creds.baseURL,
-        bundle_key: creds.bundleKey,
-        language: language,
-        document_verification:document_verification,
-        collect_user_info:collect_user_info,
-        document_verification_plus:document_verification_plus,
-        advanced_confidence:advanced_confidence,
-        profession_analysis:profession_analysis,
-        review_data:review_data,
-        preview_captured_image:preview_captured_image,
-        manual_capture_mode:manual_capture_mode,
-        capture_only_mode:capture_only_mode,
-        primaryColor:primaryColor,
-        headers:headers,
-        enable_logging:enable_logging
 
-      };
 const getToken = async () => {
-  const url = ${creds.baseURL}/api/o/token/;
+  const url = `${creds.baseURL}/api/o/token/`;
 
-  const body = username=${creds.userName}&password=${creds.password}&client_id=${creds.clientID}&client_secret=${creds.clientSecret}&grant_type=password;
+  const body = `username=${creds.userName}&password=${creds.password}&client_id=${creds.clientID}&client_secret=${creds.clientSecret}&grant_type=password`;
 
   try {
     const response = await fetch(url, {
@@ -88,7 +70,25 @@ const App = (): JSX.Element => {
     if (token) {
       // Start OCR Process
 
+const ocrParams = {
+        access_token: token,
+        base_url: creds.baseURL,
+        bundle_key: creds.bundleKey,
+        language: language,
+        document_verification:document_verification,
+        collect_user_info:collect_user_info,
+        document_verification_plus:document_verification_plus,
+        advanced_confidence:advanced_confidence,
+        profession_analysis:profession_analysis,
+        review_data:review_data,
+        preview_captured_image:preview_captured_image,
+        manual_capture_mode:manual_capture_mode,
+        capture_only_mode:capture_only_mode,
+        primaryColor:primaryColor,
+        headers:headers,
+        enable_logging:enable_logging
 
+      };
       startOCR(ocrParams)
         .then((ocrResponse) => {
           console.log('OCR Result:', ocrResponse);
