@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   Button,
   Alert,
   ActivityIndicator,
+  AppState,
 } from 'react-native';
 import { startOCR } from '@valifysolutions/react-native-vidvocr';
 
@@ -18,18 +19,19 @@ const creds = {
   clientID: 'aKM21T4hXpgHFsgNJNTKFpaq4fFpoQvuBsNWuZoQ',
   clientSecret: 'r0tLrtxTue8c4kNmPVgaAFNGSeCWvL4oOZfBnVXoQe2Ffp5rscXXAAhX50BaZEll8ZRtr2BlgD3Nk6QLOPGtjbGXYoCBL9Fn7QCu5CsMlRKDbtwSnUAfKEG30cIv8tdW',
 };
+
 const language = "en"; // "en" is set as default
-const document_verification = false; // false is set as default
-const collect_user_info = false; // false is set as default
-const document_verification_plus = false // false is set as default
-const advanced_confidence = false; // false is set as default
-const profession_analysis = false; // false is set as default
-const review_data = false; // default is true
-const preview_captured_image = true; //default is false
-const manual_capture_mode = false; //default is false
-const capture_only_mode = true; // default is false
+const document_verification = false;
+const collect_user_info = false;
+const document_verification_plus = false;
+const advanced_confidence = false;
+const profession_analysis = false;
+const review_data = false;
+const preview_captured_image = true;
+const manual_capture_mode = false;
+const capture_only_mode = true;
 const primaryColor = "";
-const headers = {}; // default is empty
+const headers = {};
 const enable_logging= false;
 
 const getToken = async () => {
@@ -61,6 +63,23 @@ const getToken = async () => {
 
 const App = (): JSX.Element => {
   const [loading, setLoading] = useState(false);
+  const [appState, setAppState] = useState(AppState.currentState);
+
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState) => {
+      if (appState.match(/inactive|background/) && nextAppState === 'active') {
+        console.log('App has come to the foreground! Restarting SDK...');
+        handleStartValify();  // Restart the SDK when the app comes back to foreground
+      }
+      setAppState(nextAppState);
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription.remove();
+    };
+  }, [appState]);
 
   const handleStartValify = async () => {
     setLoading(true);
@@ -68,9 +87,7 @@ const App = (): JSX.Element => {
     const token = await getToken();
 
     if (token) {
-      // Start OCR Process
-
-const ocrParams = {
+      const ocrParams = {
         access_token: token,
         base_url: creds.baseURL,
         bundle_key: creds.bundleKey,
@@ -87,23 +104,19 @@ const ocrParams = {
         primaryColor:primaryColor,
         headers:headers,
         enable_logging:enable_logging
-
       };
+
       startOCR(ocrParams)
         .then((ocrResponse) => {
           console.log('OCR Result:', ocrResponse);
 
-          // Parse the OCR response if it’s a string
           const parsedResponse = typeof ocrResponse === 'string' ? JSON.parse(ocrResponse) : ocrResponse;
 
-          // Check the OCR result state
           if (parsedResponse.nameValuePairs?.state === "SUCCESS") {
             const transactionIdFront = parsedResponse.nameValuePairs?.ocrResult?.ocrResult?.transactionIdFront;
             console.log('Transaction ID Front:', transactionIdFront);
 
-            if (transactionIdFront) {
-              // Wait 2 seconds before starting liveness experience // 2 seconds delay
-            } else {
+            if (!transactionIdFront) {
               Alert.alert('Error', 'Transaction ID not found in OCR response');
             }
           } else {
