@@ -12,12 +12,12 @@ import { startOCR } from '@valifysolutions/react-native-vidvocr';
 
 // Unified credentials
 const creds = {
-  baseURL: 'https://www.valifystage.com/', // Update with your actual base URL
-  bundleKey: 'ad44eb94ca6747beaf99eef02407221f', // Replace with your actual bundle key
-  userName: 'mobileusername', // Replace with actual credentials
-  password: 'q5YT54wuJ2#mbanR',
-  clientID: 'aKM21T4hXpgHFsgNJNTKFpaq4fFpoQvuBsNWuZoQ',
-  clientSecret: 'r0tLrtxTue8c4kNmPVgaAFNGSeCWvL4oOZfBnVXoQe2Ffp5rscXXAAhX50BaZEll8ZRtr2BlgD3Nk6QLOPGtjbGXYoCBL9Fn7QCu5CsMlRKDbtwSnUAfKEG30cIv8tdW',
+  baseURL: '', // Update with your actual base URL
+  bundleKey: '', // Replace with your actual bundle key
+  userName: '', // Replace with actual credentials
+  password: '',
+  clientID: '',
+  clientSecret: '',
 };
 
 const language = "en"; // "en" is set as default
